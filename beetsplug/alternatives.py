@@ -15,6 +15,7 @@ import os.path
 import threading
 from argparse import ArgumentParser
 from concurrent import futures
+import six
 
 import beets
 from beets import util, art
@@ -24,13 +25,6 @@ from beets.library import parse_query_string, Item
 from beets.util import syspath, displayable_path, cpu_count, bytestring_path
 
 from beetsplug import convert
-
-
-def get_unicode_config(config, key):
-    ret = config[key].get(str)
-    if type(ret) != unicode:
-        ret = unicode(ret, 'utf8')
-    return ret
 
 
 class AlternativesPlugin(BeetsPlugin):
@@ -55,7 +49,7 @@ class AlternativesPlugin(BeetsPlugin):
             raise KeyError(name)
 
         if conf['formats'].exists():
-            fmt = conf['formats'].get(unicode)
+            fmt = conf['formats'].get(six.text_type)
             if fmt == 'link':
                 return SymlinkView(self._log, name, lib, conf)
             else:
@@ -109,7 +103,7 @@ class External(object):
         else:
             path_config = beets.config['paths']
         self.path_formats = get_path_formats(path_config)
-        query = get_unicode_config(config, 'query')
+        query = config['query'].get(six.text_type)
         self.query, _ = parse_query_string(query, Item)
 
         self.removable = config.get(dict).get('removable', True)
@@ -201,7 +195,7 @@ class External(object):
                                 path_formats=self.path_formats)
 
     def set_path(self, item, path):
-        item[self.path_key] = unicode(path, 'utf8')
+        item[self.path_key] = six.text_type(path, 'utf8')
 
     def get_path(self, item):
         try:
@@ -261,7 +255,7 @@ class ExternalConvert(External):
     def destination(self, item):
         dest = super(ExternalConvert, self).destination(item)
         if self.should_transcode(item):
-            return os.path.splitext(dest)[0] + '.' + self.ext
+            return os.path.splitext(dest)[0] + b'.' + self.ext
         else:
             return dest
 
