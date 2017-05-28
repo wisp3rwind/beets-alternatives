@@ -89,6 +89,7 @@ class External(object):
     WRITE = 3
     MOVE = 4
     NOOP = 5
+    EMBED_ART = 6
 
     def __init__(self, log, name, lib, config):
         self._log = log
@@ -118,19 +119,24 @@ class External(object):
 
     def matched_item_action(self, item):
         path = self.get_path(item)
+        actions = []
         if path and os.path.isfile(path):
             dest = self.destination(item)
             if path != dest:
-                return (item, self.MOVE)
+                actions.extend([self.MOVE, self.WRITE])
             elif (os.path.getmtime(syspath(dest))
-                  < os.path.getmtime(syspath(item.path))):
-                return (item, self.WRITE)
-            else:
-                return (item, self.NOOP)
+                    < os.path.getmtime(syspath(item.path))):
+                actions.append(self.WRITE)
+            album = item.get_album()
+            if (album and album.artpath and
+                    (os.path.getmtime(syspath(dest))
+                     < os.path.getmtime(syspath(album.artpath)))):
+                actions.append(self.EMBED_ART)
         else:
-            return (item, self.ADD)
+            actions.append(self.ADD)
+        return (item, actions)
 
-    def items_action(self):
+    def items_actions(self):
         matched_ids = set()
         for album in self.lib.albums():
             if self.query.match(album):
@@ -141,7 +147,7 @@ class External(object):
             if item.id in matched_ids or self.query.match(item):
                 yield self.matched_item_action(item)
             elif self.get_path(item):
-                yield (item, self.REMOVE)
+                yield (item, [self.REMOVE])
 
     def ask_create(self, create=None):
         if not self.removable:
@@ -162,28 +168,32 @@ class External(object):
             return
 
         converter = self.converter()
-        for (item, action) in self.items_action():
+        for (item, actions) in self.items_actions():
             dest = self.destination(item)
             path = self.get_path(item)
-            if action == self.MOVE:
-                print_(u'>{0} -> {1}'.format(displayable_path(path),
-                                             displayable_path(dest)))
-                util.mkdirall(dest)
-                util.move(path, dest)
-                util.prune_dirs(os.path.dirname(path), root=self.directory)
-                self.set_path(item, dest)
-                item.store()
-                item.write(path=dest)
-            elif action == self.WRITE:
-                print_(u'*{0}'.format(displayable_path(path)))
-                item.write(path=path)
-            elif action == self.ADD:
-                print_(u'+{0}'.format(displayable_path(dest)))
-                converter.submit(item)
-            elif action == self.REMOVE:
-                print_(u'-{0}'.format(displayable_path(path)))
-                self.remove_item(item)
-                item.store()
+            for action in actions:
+                if action == self.MOVE:
+                    print_(u'>{0} -> {1}'.format(displayable_path(path),
+                                                 displayable_path(dest)))
+                    util.mkdirall(dest)
+                    util.move(path, dest)
+                    util.prune_dirs(os.path.dirname(path), root=self.directory)
+                    self.set_path(item, dest)
+                    item.store()
+                    path = dest
+                elif action == self.WRITE:
+                    print_(u'*{0}'.format(displayable_path(path)))
+                    item.write(path=path)
+                elif action == self.EMBED_ART:
+                    print_(u'~{0}'.format(displayable_path(path)))
+                    self.embed_art(item, path)
+                elif action == self.ADD:
+                    print_(u'+{0}'.format(displayable_path(dest)))
+                    converter.submit(item)
+                elif action == self.REMOVE:
+                    print_(u'-{0}'.format(displayable_path(path)))
+                    self.remove_item(item)
+                    item.store()
 
         for item, dest in converter.as_completed():
             self.set_path(item, dest)
@@ -217,6 +227,15 @@ class External(object):
             return item, dest
         return Worker(_convert)
 
+    def embed_art(self, item, path):
+        album = item.get_album()
+        if album and album.artpath:
+            self._log.debug("Embedding art from {} into {}".format(
+                displayable_path(album.artpath),
+                displayable_path(path)))
+            art.embed_item(self._log, item, album.artpath,
+                           itempath=path)
+
 
 class ExternalConvert(External):
 
@@ -239,18 +258,12 @@ class ExternalConvert(External):
 
             if self.should_transcode(item):
                 self._encode(self.convert_cmd, item.path, dest)
-                if self._embed:
-                    embed_art(item, dest)
             else:
                 self._log.debug(u'copying {0}'.format(displayable_path(dest)))
                 util.copy(item.path, dest, replace=True)
+            if self._embed:
+                self.embed_art(item, dest)
             return item, dest
-
-        def embed_art(item, path):
-            album = item.get_album()
-            if album and album.artpath:
-                art.embed_item(self._log, item, album.artpath,
-                               itempath=path)
         return Worker(_convert)
 
     def destination(self, item):
@@ -272,27 +285,28 @@ class SymlinkView(External):
         super(SymlinkView, self).parse_config(config)
 
     def update(self, create=None):
-        for (item, action) in self.items_action():
+        for (item, actions) in self.items_action():
             dest = self.destination(item)
             path = self.get_path(item)
-            if action == self.MOVE:
-                print_(u'>{0} -> {1}'.format(displayable_path(path),
-                                             displayable_path(dest)))
-                self.remove_item(item)
-                self.create_symlink(item)
-                self.set_path(item, dest)
+            for action in actions:
+                if action == self.MOVE:
+                    print_(u'>{0} -> {1}'.format(displayable_path(path),
+                                                 displayable_path(dest)))
+                    self.remove_item(item)
+                    self.create_symlink(item)
+                    self.set_path(item, dest)
+                    item.store()
+                elif action == self.ADD:
+                    print_(u'+{0}'.format(displayable_path(dest)))
+                    self.create_symlink(item)
+                    self.set_path(item, dest)
+                    item.store()
+                elif action == self.REMOVE:
+                    print_(u'-{0}'.format(displayable_path(path)))
+                    self.remove_item(item)
+                else:
+                    continue
                 item.store()
-            elif action == self.ADD:
-                print_(u'+{0}'.format(displayable_path(dest)))
-                self.create_symlink(item)
-                self.set_path(item, dest)
-                item.store()
-            elif action == self.REMOVE:
-                print_(u'-{0}'.format(displayable_path(path)))
-                self.remove_item(item)
-            else:
-                continue
-            item.store()
 
     def create_symlink(self, item):
         dest = self.destination(item)
