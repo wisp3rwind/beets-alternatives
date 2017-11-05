@@ -129,7 +129,7 @@ class External(object):
                 actions.append(self.WRITE)
             album = item.get_album()
             if (album and album.artpath and
-                    (os.path.getmtime(syspath(dest))
+                    (os.path.getmtime(syspath(path))
                      < os.path.getmtime(syspath(album.artpath)))):
                 actions.append(self.EMBED_ART)
         else:
