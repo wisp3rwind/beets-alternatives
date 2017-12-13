@@ -17,7 +17,6 @@ setup(
 
     install_requires=[
         'beets>=1.3.13',
-        'futures',
     ],
 
     classifiers=[
