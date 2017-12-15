@@ -285,7 +285,7 @@ class SymlinkView(External):
         super(SymlinkView, self).parse_config(config)
 
     def update(self, create=None):
-        for (item, actions) in self.items_action():
+        for (item, actions) in self.items_actions():
             dest = self.destination(item)
             path = self.get_path(item)
             for action in actions:
