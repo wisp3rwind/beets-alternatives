@@ -16,7 +16,7 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets.library import Item
-from beets.util import syspath, bytestring_path
+from beets.util import syspath, bytestring_path, MoveOperation
 
 from beetsplug import alternatives
 from beetsplug import convert
@@ -223,7 +223,7 @@ class TestHelper(TestCase, Assertions):
                                            bytestring_path('min.' + ext)))
         item.add(self.lib)
         item.update(values)
-        item.move(copy=True)
+        item.move(operation=MoveOperation.COPY)
         item.write()
         album = self.lib.add_album([item])
         album.albumartist = item.artist
@@ -242,7 +242,7 @@ class TestHelper(TestCase, Assertions):
                                            bytestring_path('min.mp3')))
         item.add(self.lib)
         item.update(values)
-        item.move(copy=True)
+        item.move(operation=MoveOperation.COPY)
         item.write()
         return item
 

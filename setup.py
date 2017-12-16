@@ -16,7 +16,7 @@ setup(
     packages=['beetsplug'],
 
     install_requires=[
-        'beets>=1.4.2, <1.4.6',
+        'beets>=1.4.6',
         'futures; python_version<"3"',
     ],
 
