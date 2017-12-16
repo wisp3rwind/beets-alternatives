@@ -49,8 +49,8 @@ class AlternativesPlugin(BeetsPlugin):
             raise KeyError(name)
 
         if conf['formats'].exists():
-            fmt = conf['formats'].get(six.text_type)
-            if fmt == 'link':
+            fmt = conf['formats'].as_str()
+            if fmt == u'link':
                 return SymlinkView(self._log, name, lib, conf)
             else:
                 return ExternalConvert(self._log, name, fmt.split(), lib, conf)
@@ -104,13 +104,13 @@ class External(object):
         else:
             path_config = beets.config['paths']
         self.path_formats = get_path_formats(path_config)
-        query = config['query'].get(six.text_type)
+        query = config['query'].as_str()
         self.query, _ = parse_query_string(query, Item)
 
         self.removable = config.get(dict).get('removable', True)
 
         if 'directory' in config:
-            dir = config['directory'].get(str)
+            dir = config['directory'].as_str()
         else:
             dir = self.name
         if not os.path.isabs(dir):
@@ -281,7 +281,7 @@ class SymlinkView(External):
 
     def parse_config(self, config):
         if 'query' not in config:
-            config['query'] = ''  # This is a TrueQuery()
+            config['query'] = u''  # This is a TrueQuery()
         super(SymlinkView, self).parse_config(config)
 
     def update(self, create=None):

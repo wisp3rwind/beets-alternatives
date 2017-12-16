@@ -20,9 +20,9 @@ class DocTest(TestHelper):
         self.config['alternatives'] = {
             'myplayer': {
                 'directory': external_dir,
-                'paths': {'default': '$artist/$title'},
-                'formats': 'aac mp3',
-                'query': 'onplayer:true',
+                'paths': {'default': u'$artist/$title'},
+                'formats': u'aac mp3',
+                'query': u'onplayer:true',
                 'removable': True,
             }
         }
@@ -42,9 +42,9 @@ class DocTest(TestHelper):
             out = self.runcli('alt', 'update', 'myplayer')
             self.assertIn('Do you want to create the collection?', out)
 
-        self.assertNotFileTag(external_from_mp3, 'ISAAC')
-        self.assertNotFileTag(external_from_m4a, 'ISAAC')
-        self.assertFileTag(external_from_ogg, 'ISAAC')
+        self.assertNotFileTag(external_from_mp3, b'ISAAC')
+        self.assertNotFileTag(external_from_m4a, b'ISAAC')
+        self.assertFileTag(external_from_ogg, b'ISAAC')
         self.assertFalse(os.path.isfile(external_beet))
 
         self.runcli('modify', '--yes', 'composer=JSB', 'artist:Bach')
@@ -60,7 +60,7 @@ class DocTest(TestHelper):
         self.assertFalse(os.path.isfile(external_from_mp3))
         self.assertFalse(os.path.isfile(external_from_m4a))
         self.assertFalse(os.path.isfile(external_from_ogg))
-        self.assertFileTag(external_beet, 'ISAAC')
+        self.assertFileTag(external_beet, b'ISAAC')
 
     def test_symlink_view(self):
         self.set_paths_config({
@@ -91,7 +91,7 @@ class ExternalCopyTest(TestHelper):
         self.config['alternatives'] = {
             'myexternal': {
                 'directory': self.external_dir,
-                'query': 'myexternal:true',
+                'query': u'myexternal:true',
             }
         }
         self.external_config = self.config['alternatives']['myexternal']
@@ -231,7 +231,7 @@ class ExternalConvertTest(TestHelper):
         self.config['alternatives'] = {
             'myexternal': {
                 'directory': self.external_dir,
-                'query': 'myexternal:true',
+                'query': u'myexternal:true',
                 'formats': 'ogg mp3'
             }
         }
@@ -242,7 +242,7 @@ class ExternalConvertTest(TestHelper):
         self.runcli('alt', 'update', 'myexternal')
         item.load()
         converted_path = item['alt.myexternal']
-        self.assertFileTag(converted_path, 'ISOGG')
+        self.assertFileTag(converted_path, b'ISOGG')
 
     def test_convert_and_embed(self):
         self.config['convert']['embed'] = True
@@ -264,7 +264,7 @@ class ExternalConvertTest(TestHelper):
         self.runcli('alt', 'update', 'myexternal')
         item.load()
         converted_path = item['alt.myexternal']
-        self.assertNotFileTag(converted_path, 'ISOGG')
+        self.assertNotFileTag(converted_path, b'ISOGG')
 
     def test_skip_convert_for_alternative_format(self):
         item = self.add_track(myexternal='true')
@@ -273,7 +273,7 @@ class ExternalConvertTest(TestHelper):
         self.runcli('alt', 'update', 'myexternal')
         item.load()
         converted_path = item['alt.myexternal']
-        self.assertNotFileTag(converted_path, 'ISOGG')
+        self.assertNotFileTag(converted_path, b'ISOGG')
 
 
 class ExternalRemovableTest(TestHelper):
@@ -284,7 +284,7 @@ class ExternalRemovableTest(TestHelper):
         self.config['alternatives'] = {
             'myexternal': {
                 'directory': external_dir,
-                'query': '',
+                'query': u'',
             }
         }
         self.external_config = self.config['alternatives']['myexternal']
