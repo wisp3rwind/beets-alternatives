@@ -1,13 +1,12 @@
 import os
 import os.path
-from unittest import TestCase
 
 from helper import TestHelper, control_stdin
 
 from beets.mediafile import MediaFile
 
 
-class DocTest(TestHelper, TestCase):
+class DocTest(TestHelper):
 
     def test_external(self):
         external_dir = os.path.join(self.mkdtemp(), 'myplayer')
@@ -84,7 +83,7 @@ class DocTest(TestHelper, TestCase):
         )
 
 
-class ExternalCopyTest(TestHelper, TestCase):
+class ExternalCopyTest(TestHelper):
 
     def setUp(self):
         super(ExternalCopyTest, self).setUp()
@@ -220,7 +219,7 @@ class ExternalCopyTest(TestHelper, TestCase):
         self.assertIn("Alternative collection 'unkown' not found.", out)
 
 
-class ExternalConvertTest(TestHelper, TestCase):
+class ExternalConvertTest(TestHelper):
 
     def setUp(self):
         super(ExternalConvertTest, self).setUp()
@@ -277,7 +276,7 @@ class ExternalConvertTest(TestHelper, TestCase):
         self.assertNotFileTag(converted_path, 'ISOGG')
 
 
-class ExternalRemovableTest(TestHelper, TestCase):
+class ExternalRemovableTest(TestHelper):
 
     def setUp(self):
         super(ExternalRemovableTest, self).setUp()
