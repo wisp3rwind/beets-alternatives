@@ -1,5 +1,4 @@
 from setuptools import setup
-import sys
 
 setup(
     name='beets-alternatives',
@@ -16,11 +15,10 @@ setup(
 
     packages=['beetsplug'],
 
-    install_requires=(
-        ['beets>=1.4.2',
-         ] +
-        (['futures'] if sys.version_info < (3, 0, 0) else [])
-    ),
+    install_requires=[
+        'beets>=1.4.2',
+        'futures; python_version<"3"',
+    ],
 
     classifiers=[
         'Topic :: Multimedia :: Sound/Audio',
