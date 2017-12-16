@@ -14,7 +14,9 @@ import beets
 from beets import logging
 from beets import plugins
 from beets import ui
+from beets import util
 from beets.library import Item
+from beets.util import syspath, bytestring_path
 
 from beetsplug import alternatives
 from beetsplug import convert
@@ -102,29 +104,27 @@ class Assertions(object):
 
     def assertFileTag(self, path, tag):
         self.assertIsFile(path)
-        with open(path, 'rb') as f:
+        with open(util.syspath(path), 'rb') as f:
             f.seek(-5, os.SEEK_END)
             self.assertEqual(f.read(), tag)
 
     def assertNotFileTag(self, path, tag):
         self.assertIsFile(path)
-        with open(path, 'rb') as f:
+        with open(util.syspath(path), 'rb') as f:
             f.seek(-5, os.SEEK_END)
             self.assertNotEqual(f.read(), tag)
 
     def assertIsFile(self, path):
-        if not isinstance(path, unicode):
-            path = unicode(path, 'utf8')
-        self.assertTrue(os.path.isfile(path.encode('utf8')),
+        self.assertTrue(os.path.isfile(util.syspath(path)),
                         msg=u'Path is not a file: {0}'.format(path))
 
     def assertIsNotFile(self, path):
-        if not isinstance(path, unicode):
-            path = unicode(path, 'utf8')
-        self.assertFalse(os.path.isfile(path.encode('utf8')),
+        self.assertFalse(os.path.isfile(util.syspath(path)),
                          msg=u'Path is a file: {0}'.format(path))
 
     def assertSymlink(self, link, target):
+        link = util.syspath(link)
+        target = util.syspath(target)
         self.assertTrue(os.path.islink(link),
                         msg=u'Path is not a symbolic link: {0}'.format(link))
         self.assertTrue(os.path.isfile(target),
@@ -149,9 +149,11 @@ class TestHelper(TestCase, Assertions):
     def tearDown(self):
         self.unload_plugins()
         for tempdir in self._tempdirs:
-            shutil.rmtree(tempdir)
+            shutil.rmtree(util.syspath(tempdir))
 
     def mkdtemp(self):
+        # This return a str path, i.e. Unicode on Python 3. We need this in
+        # order to put paths into the configuration.
         path = tempfile.mkdtemp()
         self._tempdirs.append(path)
         return path
@@ -170,11 +172,14 @@ class TestHelper(TestCase, Assertions):
         self.config['threaded'] = False
         self.config['import']['copy'] = False
 
-        self.libdir = self.mkdtemp()
-        self.config['directory'] = self.libdir
+        libdir = self.mkdtemp()
+        self.config['directory'] = libdir
+        self.libdir = bytestring_path(libdir)
 
         self.lib = beets.library.Library(':memory:', self.libdir)
-        self.fixture_dir = os.path.join(os.path.dirname(__file__), 'fixtures')
+        self.fixture_dir = os.path.join(
+                bytestring_path(os.path.dirname(__file__)),
+                b'fixtures')
 
     def teardown_beets(self):
         del self.lib._connections
@@ -203,7 +208,8 @@ class TestHelper(TestCase, Assertions):
         return out.getvalue()
 
     def lib_path(self, path):
-        return os.path.join(self.libdir, path.replace('/', os.sep))
+        # TODO: bytestring_path?
+        return os.path.join(self.libdir, path.replace(b'/', bytestring_path(os.sep)))
 
     def add_album(self, **kwargs):
         values = {
@@ -214,7 +220,8 @@ class TestHelper(TestCase, Assertions):
         }
         values.update(kwargs)
         ext = values.pop('format').lower()
-        item = Item.from_path(os.path.join(self.fixture_dir, 'min.' + ext))
+        item = Item.from_path(os.path.join(self.fixture_dir,
+                                           bytestring_path('min.' + ext)))
         item.add(self.lib)
         item.update(values)
         item.move(copy=True)
@@ -232,7 +239,8 @@ class TestHelper(TestCase, Assertions):
         }
         values.update(kwargs)
 
-        item = Item.from_path(os.path.join(self.fixture_dir, 'min.mp3'))
+        item = Item.from_path(os.path.join(self.fixture_dir,
+                                           bytestring_path('min.mp3')))
         item.add(self.lib)
         item.update(values)
         item.move(copy=True)

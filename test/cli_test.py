@@ -4,6 +4,7 @@ import os.path
 from helper import TestHelper, control_stdin
 
 from beets.mediafile import MediaFile
+from beets.util import bytestring_path
 
 
 class DocTest(TestHelper):
@@ -32,10 +33,14 @@ class DocTest(TestHelper):
         self.add_album(artist='Bach', title='was ogg', format='ogg')
         self.add_album(artist='Beethoven', title='was ogg', format='ogg')
 
-        external_from_mp3 = os.path.join(external_dir, 'Bach', 'was mp3.mp3')
-        external_from_m4a = os.path.join(external_dir, 'Bach', 'was m4a.m4a')
-        external_from_ogg = os.path.join(external_dir, 'Bach', 'was ogg.m4a')
-        external_beet = os.path.join(external_dir, 'Beethoven', 'was ogg.m4a')
+        external_from_mp3 = bytestring_path(
+                os.path.join(external_dir, 'Bach', 'was mp3.mp3'))
+        external_from_m4a = bytestring_path(
+                os.path.join(external_dir, 'Bach', 'was m4a.m4a'))
+        external_from_ogg = bytestring_path(
+                os.path.join(external_dir, 'Bach', 'was ogg.m4a'))
+        external_beet = bytestring_path(
+                os.path.join(external_dir, 'Beethoven', 'was ogg.m4a'))
 
         self.runcli('modify', '--yes', 'onplayer=true', 'artist:Bach')
         with control_stdin('y'):
@@ -78,8 +83,8 @@ class DocTest(TestHelper):
         self.runcli('alt', 'update', 'by-year')
 
         self.assertSymlink(
-            self.lib_path('by-year/1982/Thriller/track 1.mp3'),
-            self.lib_path('Michael Jackson/Thriller/track 1.mp3'),
+            self.lib_path(b'by-year/1982/Thriller/track 1.mp3'),
+            self.lib_path(b'Michael Jackson/Thriller/track 1.mp3'),
         )
 
 
@@ -87,10 +92,10 @@ class ExternalCopyTest(TestHelper):
 
     def setUp(self):
         super(ExternalCopyTest, self).setUp()
-        self.external_dir = self.mkdtemp()
+        external_dir = self.mkdtemp()
         self.config['alternatives'] = {
             'myexternal': {
-                'directory': self.external_dir,
+                'directory': external_dir,
                 'query': u'myexternal:true',
             }
         }
@@ -223,14 +228,14 @@ class ExternalConvertTest(TestHelper):
 
     def setUp(self):
         super(ExternalConvertTest, self).setUp()
-        self.external_dir = self.mkdtemp()
+        external_dir = self.mkdtemp()
         self.config['convert']['formats'] = {
             'ogg': 'bash -c "cp \'$source\' \'$dest\';' +
                    'printf ISOGG >> \'$dest\'"'
         }
         self.config['alternatives'] = {
             'myexternal': {
-                'directory': self.external_dir,
+                'directory': external_dir,
                 'query': u'myexternal:true',
                 'formats': 'ogg mp3'
             }
@@ -248,7 +253,7 @@ class ExternalConvertTest(TestHelper):
         self.config['convert']['embed'] = True
 
         album = self.add_album(myexternal='true', format='m4a')
-        album.artpath = os.path.join(self.fixture_dir, 'image.png')
+        album.artpath = os.path.join(self.fixture_dir, b'image.png')
         album.store()
 
         self.runcli('alt', 'update', 'myexternal')
