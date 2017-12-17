@@ -208,7 +208,6 @@ class TestHelper(TestCase, Assertions):
         return out.getvalue()
 
     def lib_path(self, path):
-        # TODO: bytestring_path?
         return os.path.join(self.libdir, path.replace(b'/', bytestring_path(os.sep)))
 
     def add_album(self, **kwargs):
