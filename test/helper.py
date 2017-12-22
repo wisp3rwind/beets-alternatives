@@ -26,12 +26,12 @@ from beetsplug import convert
 logging.getLogger('beets').propagate = True
 
 
-
 if parse_version(beets.__version__) < parse_version("1.4.6"):
     def _move_item(item):
         item.move(copy=True)
 else:
     from beets.util import MoveOperation
+
     def _move_item(item):
         item.move(operation=MoveOperation.COPY)
 
@@ -115,27 +115,27 @@ class Assertions(object):
 
     def assertFileTag(self, path, tag):
         self.assertIsFile(path)
-        with open(util.syspath(path), 'rb') as f:
+        with open(syspath(path), 'rb') as f:
             f.seek(-5, os.SEEK_END)
             self.assertEqual(f.read(), tag)
 
     def assertNotFileTag(self, path, tag):
         self.assertIsFile(path)
-        with open(util.syspath(path), 'rb') as f:
+        with open(syspath(path), 'rb') as f:
             f.seek(-5, os.SEEK_END)
             self.assertNotEqual(f.read(), tag)
 
     def assertIsFile(self, path):
-        self.assertTrue(os.path.isfile(util.syspath(path)),
+        self.assertTrue(os.path.isfile(syspath(path)),
                         msg=u'Path is not a file: {0}'.format(path))
 
     def assertIsNotFile(self, path):
-        self.assertFalse(os.path.isfile(util.syspath(path)),
+        self.assertFalse(os.path.isfile(syspath(path)),
                          msg=u'Path is a file: {0}'.format(path))
 
     def assertSymlink(self, link, target):
-        link = util.syspath(link)
-        target = util.syspath(target)
+        link = syspath(link)
+        target = syspath(target)
         self.assertTrue(os.path.islink(link),
                         msg=u'Path is not a symbolic link: {0}'.format(link))
         self.assertTrue(os.path.isfile(target),
@@ -160,7 +160,7 @@ class TestHelper(TestCase, Assertions):
     def tearDown(self):
         self.unload_plugins()
         for tempdir in self._tempdirs:
-            shutil.rmtree(util.syspath(tempdir))
+            shutil.rmtree(syspath(tempdir))
 
     def mkdtemp(self):
         # This return a str path, i.e. Unicode on Python 3. We need this in
@@ -219,7 +219,8 @@ class TestHelper(TestCase, Assertions):
         return out.getvalue()
 
     def lib_path(self, path):
-        return os.path.join(self.libdir, path.replace(b'/', bytestring_path(os.sep)))
+        return os.path.join(self.libdir,
+                            path.replace(b'/', bytestring_path(os.sep)))
 
     def add_album(self, **kwargs):
         values = {
