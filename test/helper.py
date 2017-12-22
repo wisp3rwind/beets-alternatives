@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from six import StringIO
 from concurrent import futures
 from unittest import TestCase
+from pkg_resources import parse_version
 
 from mock import patch
 
@@ -16,13 +17,23 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets.library import Item
-from beets.util import syspath, bytestring_path, MoveOperation
+from beets.util import syspath, bytestring_path
 
 from beetsplug import alternatives
 from beetsplug import convert
 
 
 logging.getLogger('beets').propagate = True
+
+
+
+if parse_version(beets.__version__) < parse_version("1.4.6"):
+    def _move_item(item):
+        item.move(copy=True)
+else:
+    from beets.util import MoveOperation
+    def _move_item(item):
+        item.move(operation=MoveOperation.COPY)
 
 
 class LogCapture(logging.Handler):
@@ -223,7 +234,7 @@ class TestHelper(TestCase, Assertions):
                                            bytestring_path('min.' + ext)))
         item.add(self.lib)
         item.update(values)
-        item.move(operation=MoveOperation.COPY)
+        _move_item(item)
         item.write()
         album = self.lib.add_album([item])
         album.albumartist = item.artist
@@ -242,7 +253,7 @@ class TestHelper(TestCase, Assertions):
                                            bytestring_path('min.mp3')))
         item.add(self.lib)
         item.update(values)
-        item.move(operation=MoveOperation.COPY)
+        _move_item(item)
         item.write()
         return item
 
