@@ -1,8 +1,8 @@
 beets-alternatives
 ==================
 
-[![Build Status](https://travis-ci.org/wordofglass/beets-alternatives.svg?branch=master)](https://travis-ci.org/wordofglass/beets-alternatives)
-<!--[![Coverage Status](https://coveralls.io/repos/wordofglass/beets-alternatives/badge.png?branch=master)](https://coveralls.io/r/wordofglass/beets-alternatives?branch=master)-->
+[![Build Status](https://travis-ci.org/wisp3rwind/beets-alternatives.svg?branch=master)](https://travis-ci.org/wisp3rwind/beets-alternatives)
+<!--[![Coverage Status](https://coveralls.io/repos/wisp3rwind/beets-alternatives/badge.png?branch=master)](https://coveralls.io/r/wisp3rwind/beets-alternatives?branch=master)-->
 
 You want to manage multiple versions of your audio files with beets?
 Your favorite iPlayer has limited space and does not support Ogg Vorbis? You
