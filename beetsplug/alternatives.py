@@ -23,6 +23,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, get_path_formats, input_yn, UserError, print_
 from beets.library import parse_query_string, Item
 from beets.util import syspath, displayable_path, cpu_count, bytestring_path
+from beets.mediafile import MediaFile
 
 from beetsplug import convert
 
@@ -122,18 +123,24 @@ class External(object):
         path = self.get_path(item)
         actions = []
         if path and os.path.isfile(syspath(path)):
-            dest = self.destination(item)
-            if not util.samefile(path, dest):
-                actions.extend([self.MOVE, self.WRITE])
-            elif (os.path.getmtime(syspath(dest))
-                    < os.path.getmtime(syspath(item.path))):
-                actions.append(self.WRITE)
-            album = item.get_album()
-            if (album and album.artpath and
-                    (os.path.getmtime(syspath(path))
-                     < os.path.getmtime(syspath(album.artpath)))):
-                actions.append(self.EMBED_ART)
+            if self.needs_redo(item, path):
+                # Destination format changed
+                actions.extend([self.REMOVE, self.ADD])
+            else:
+                # Only update metadata
+                dest = self.destination(item)
+                if not util.samefile(path, dest):
+                    actions.extend([self.MOVE, self.WRITE])
+                elif (os.path.getmtime(syspath(dest))
+                        < os.path.getmtime(syspath(item.path))):
+                    actions.append(self.WRITE)
+                album = item.get_album()
+                if (album and album.artpath and
+                        (os.path.getmtime(syspath(path))
+                         < os.path.getmtime(syspath(album.artpath)))):
+                    actions.append(self.EMBED_ART)
         else:
+            # Missing
             actions.append(self.ADD)
         return (item, actions)
 
@@ -206,6 +213,9 @@ class External(object):
         return item.destination(basedir=self.directory,
                                 path_formats=self.path_formats)
 
+    def needs_redo(self, item, path):
+        return False
+
     def set_path(self, item, path):
         item[self.path_key] = six.text_type(path, 'utf8')
 
@@ -274,6 +284,12 @@ class ExternalConvert(External):
             return os.path.splitext(dest)[0] + b'.' + self.ext
         else:
             return dest
+
+    def needs_redo(self, item, path):
+        fmt = MediaFile(path).format.lower() 
+        print("DEBUG: " + fmt + " != " + self.formats[0])
+        return (self.should_transcode(item) and
+                fmt != self.formats[0])
 
     def should_transcode(self, item):
         return item.format.lower() not in self.formats
