@@ -259,6 +259,9 @@ class ExternalConvert(External):
         self.formats = [f.lower() for f in formats]
         self.formats = [convert.ALIASES.get(f, f) for f in formats]
         self.convert_cmd, self.ext = convert.get_format(self.formats[0])
+        self.check_aliases = dict()
+        for a in config['check_aliases'].get(dict):
+            self.check_aliases[a] = config['check_aliases'][a].as_str().split()
 
     def converter(self):
         fs_lock = threading.Lock()
@@ -286,10 +289,12 @@ class ExternalConvert(External):
             return dest
 
     def needs_redo(self, item, path):
-        fmt = MediaFile(path).format.lower() 
-        print("DEBUG: " + fmt + " != " + self.formats[0])
+        curr_fmt = MediaFile(path).format.lower() 
+        fmt = self.formats[0]
+        print_("DEBUG: is: {}, should: {}".format(curr_fmt, fmt))
         return (self.should_transcode(item) and
-                fmt != self.formats[0])
+                not (curr_fmt == fmt or any(curr_fmt == f for f in self.check_aliases[fmt]))
+                )
 
     def should_transcode(self, item):
         return item.format.lower() not in self.formats
