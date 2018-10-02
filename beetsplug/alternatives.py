@@ -291,7 +291,7 @@ class ExternalConvert(External):
     def needs_redo(self, item, path):
         curr_fmt = MediaFile(path).format.lower() 
         fmt = self.formats[0]
-        print_("DEBUG: is: {}, should: {}".format(curr_fmt, fmt))
+        # print_("DEBUG: is: {}, should: {}".format(curr_fmt, fmt))
         return (self.should_transcode(item) and
                 not (curr_fmt == fmt or any(curr_fmt == f for f in self.check_aliases[fmt]))
                 )
