@@ -4,11 +4,11 @@ import shutil
 
 from helper import TestHelper, control_stdin
 
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets import util
 from beets.util import bytestring_path, syspath
 
-from beets.util.confit import ConfigValueError
+from confuse import ConfigValueError
 
 
 class DocTest(TestHelper):
